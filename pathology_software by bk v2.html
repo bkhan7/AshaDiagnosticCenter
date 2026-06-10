@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PathoCare — Pathology Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #161b27;
+    --surface2: #1e2535;
+    --surface3: #242d3f;
+    --border: #2a3347;
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --font: 'IBM Plex Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:var(--font); font-size:14px; display:flex; height:100vh; overflow:hidden; }
+
+  /* Sidebar */
+  .sidebar { width:220px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
+  .logo { padding:20px 18px 16px; border-bottom:1px solid var(--border); }
+  .logo-name { font-size:18px; font-weight:600; color:#fff; letter-spacing:-0.5px; }
+  .logo-sub { font-size:11px; color:var(--text3); font-family:var(--mono); margin-top:2px; }
+  .nav { padding:12px 8px; flex:1; }
+  .nav-section { font-size:10px; font-weight:600; color:var(--text3); letter-spacing:1.5px; text-transform:uppercase; padding:8px 10px 4px; margin-top:8px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; color:var(--text2); font-size:13px; transition:all 0.15s; margin-bottom:2px; }
+  .nav-item:hover { background:var(--surface2); color:var(--text); }
+  .nav-item.active { background:rgba(59,130,246,0.15); color:var(--accent); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; }
+  .nav-badge { margin-left:auto; background:var(--accent); color:#fff; font-size:10px; padding:1px 6px; border-radius:10px; font-family:var(--mono); }
+  .sidebar-footer { padding:12px; border-top:1px solid var(--border); }
+  .user-card { display:flex; align-items:center; gap:10px; padding:8px; border-radius:8px; background:var(--surface2); }
+  .user-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:#fff; }
+  .user-name { font-size:13px; font-weight:500; }
+  .user-role { font-size:11px; color:var(--text3); }
+
+  /* Main */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .topbar { height:56px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 20px; gap:12px; flex-shrink:0; }
+  .page-title { font-size:16px; font-weight:600; flex:1; }
+  .topbar-btn { display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font-family:var(--font); font-size:13px; cursor:pointer; transition:all 0.15s; }
+  .topbar-btn:hover { background:var(--surface2); border-color:var(--accent); color:var(--accent); }
+  .topbar-btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .topbar-btn.primary:hover { background:#2563eb; }
+  .search-box { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 12px; width:240px; }
+  .search-box input { background:none; border:none; outline:none; color:var(--text); font-family:var(--font); font-size:13px; width:100%; }
+  .search-box input::placeholder { color:var(--text3); }
+
+  /* Content */
+  .content { flex:1; overflow:auto; padding:20px; }
+
+  /* Stats */
+  .stats-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:20px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; position:relative; overflow:hidden; }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .stat-card.blue::before { background:var(--accent); }
+  .stat-card.green::before { background:var(--green); }
+  .stat-card.amber::before { background:var(--amber); }
+  .stat-card.purple::before { background:var(--purple); }
+  .stat-card.cyan::before { background:var(--accent2); }
+  .stat-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px; }
+  .stat-value { font-size:26px; font-weight:600; font-family:var(--mono); line-height:1; }
+  .stat-sub { font-size:11px; color:var(--text3); margin-top:6px; }
+  .stat-sub span { color:var(--green); }
+
+  /* Tables */
+  .section { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:16px; }
+  .section-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); }
+  .section-title { font-size:14px; font-weight:600; }
+  .section-actions { display:flex; gap:8px; }
+  table { width:100%; border-collapse:collapse; }
+  th { font-size:11px; font-weight:500; color:var(--text3); text-transform:uppercase; letter-spacing:0.8px; padding:10px 18px; text-align:left; border-bottom:1px solid var(--border); background:var(--surface2); }
+  td { padding:12px 18px; border-bottom:1px solid rgba(42,51,71,0.5); font-size:13px; vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:500; font-family:var(--mono); }
+  .badge.pending { background:rgba(245,158,11,0.15); color:var(--amber); }
+  .badge.processing { background:rgba(59,130,246,0.15); color:var(--accent); }
+  .badge.ready { background:rgba(16,185,129,0.15); color:var(--green); }
+  .badge.delivered { background:rgba(100,116,139,0.15); color:var(--text3); }
+  .badge.urgent { background:rgba(239,68,68,0.15); color:var(--red); }
+  .pid { font-family:var(--mono); color:var(--accent); font-size:12px; }
+  .action-btn { padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:none; color:var(--text2); font-family:var(--font); font-size:12px; cursor:pointer; transition:all 0.1s; }
+  .action-btn:hover { background:var(--surface3); color:var(--text); border-color:var(--accent); }
+
+  /* Modal */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; width:580px; max-height:85vh; overflow:auto; box-shadow:0 25px 60px rgba(0,0,0,0.5); }
+  .modal-header { padding:20px 24px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .modal-title { font-size:16px; font-weight:600; }
+  .modal-close { background:none; border:none; color:var(--text3); cursor:pointer; font-size:20px; line-height:1; padding:4px; }
+  .modal-close:hover { color:var(--text); }
+  .modal-body { padding:20px 24px; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-group.full { grid-column:1/-1; }
+  label { font-size:12px; color:var(--text2); font-weight:500; }
+  input, select, textarea { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:9px 12px; color:var(--text); font-family:var(--font); font-size:13px; outline:none; transition:border-color 0.15s; }
+  input:focus, select:focus, textarea:focus { border-color:var(--accent); }
+  select option { background:var(--surface); }
+  textarea { resize:vertical; min-height:70px; }
+  .modal-footer { padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+
+  /* Tabs */
+  .tabs { display:flex; gap:0; border-bottom:1px solid var(--border); padding:0 18px; }
+  .tab { padding:10px 16px; cursor:pointer; font-size:13px; color:var(--text3); border-bottom:2px solid transparent; margin-bottom:-1px; transition:all 0.15s; }
+  .tab:hover { color:var(--text2); }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+  /* Report viewer */
+  .report-box { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:16px; font-family:var(--mono); font-size:12px; }
+  .report-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(42,51,71,0.4); }
+  .report-row:last-child { border-bottom:none; }
+  .report-test { color:var(--text2); }
+  .report-result { font-weight:500; }
+  .report-result.normal { color:var(--green); }
+  .report-result.high { color:var(--red); }
+  .report-result.low { color:var(--amber); }
+  .report-range { color:var(--text3); font-size:11px; }
+
+  /* Invoice */
+  .invoice-line { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(42,51,71,0.4); font-size:13px; }
+  .invoice-total { display:flex; justify-content:space-between; padding:12px 0 0; font-weight:600; font-size:15px; color:var(--accent); }
+
+  /* Empty */
+  .empty { text-align:center; padding:40px; color:var(--text3); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  /* Notification */
+  .toast { position:fixed; bottom:20px; right:20px; background:var(--green); color:#fff; padding:12px 18px; border-radius:10px; font-size:13px; z-index:999; opacity:0; transform:translateY(10px); transition:all 0.3s; }
+  .toast.show { opacity:1; transform:translateY(0); }
+
+  /* Two-column layout */
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+  /* Activity */
+  .activity-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid rgba(42,51,71,0.4); }
+  .activity-item:last-child { border-bottom:none; }
+  .activity-dot { width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+  .activity-text { font-size:13px; line-height:1.5; }
+  .activity-time { font-size:11px; color:var(--text3); margin-top:2px; font-family:var(--mono); }
+
+  /* Search & Filter */
+  .filter-bar { display:flex; align-items:center; gap:10px; padding:12px 18px; border-bottom:1px solid var(--border); flex-wrap:wrap; background:var(--surface2); }
+  .filter-bar input, .filter-bar select { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:7px 11px; color:var(--text); font-family:var(--font); font-size:12px; outline:none; transition:border-color 0.15s; height:34px; }
+  .filter-bar input:focus, .filter-bar select:focus { border-color:var(--accent); }
+  .filter-bar input[type=text] { width:180px; }
+  .filter-bar input[type=date] { width:140px; color-scheme:dark; }
+  .filter-bar select { width:140px; }
+  .filter-label { font-size:11px; color:var(--text3); white-space:nowrap; }
+  .filter-chip { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; background:rgba(59,130,246,0.15); color:var(--accent); border-radius:20px; font-size:11px; cursor:pointer; border:1px solid rgba(59,130,246,0.3); }
+  .filter-chip:hover { background:rgba(59,130,246,0.25); }
+  .filter-chip .x { font-size:13px; line-height:1; margin-left:2px; opacity:0.7; }
+  .chips-row { display:flex; gap:6px; flex-wrap:wrap; padding:8px 18px; border-bottom:1px solid var(--border); min-height:0; }
+  .chips-row:empty { display:none; }
+  .result-count { font-size:12px; color:var(--text3); margin-left:auto; font-family:var(--mono); white-space:nowrap; }
+  .sort-btn { padding:6px 11px; border-radius:7px; border:1px solid var(--border); background:none; color:var(--text2); font-size:12px; cursor:pointer; font-family:var(--font); transition:all 0.1s; display:flex; align-items:center; gap:5px; height:34px; }
+  .sort-btn:hover { background:var(--surface3); color:var(--text); }
+  .sort-btn.active { border-color:var(--accent); color:var(--accent); }
+  .global-results { padding:6px 0; }
+  .global-result-item { display:flex; align-items:center; gap:14px; padding:10px 18px; border-bottom:1px solid rgba(42,51,71,0.4); cursor:pointer; transition:background 0.1s; }
+  .global-result-item:hover { background:var(--surface2); }
+  .global-result-icon { width:32px; height:32px; border-radius:8px; background:rgba(59,130,246,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .global-result-main { flex:1; }
+  .global-result-name { font-size:13px; font-weight:500; }
+  .global-result-sub { font-size:11px; color:var(--text3); margin-top:2px; }
+  .highlight { background:rgba(59,130,246,0.25); color:var(--accent); border-radius:3px; padding:0 2px; }
+  .advanced-query { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:16px; }
+  .query-title { font-size:12px; font-weight:600; color:var(--text2); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.8px; }
+  .query-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .query-actions { display:flex; gap:8px; margin-top:12px; }
+  .btn-reset { padding:7px 14px; border-radius:8px; border:1px solid var(--border); background:none; color:var(--text2); font-family:var(--font); font-size:12px; cursor:pointer; }
+  .btn-reset:hover { background:var(--surface3); color:var(--text); }
+  .btn-apply { padding:7px 14px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-family:var(--font); font-size:12px; cursor:pointer; }
+  .btn-apply:hover { background:#2563eb; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-name">Asha Diagnostic Center</div>
+    <div class="logo-sub">v2.1 · Lab Management</div>
+  </div>
+  <div class="nav">
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-section">Management</div>
+    <div class="nav-item" onclick="showPage('patients')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Patients
+      <span class="nav-badge" id="patient-count">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('samples')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+      Samples
+    </div>
+    <div class="nav-item" onclick="showPage('reports')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Reports
+    </div>
+    <div class="nav-item" onclick="showPage('billing')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Billing
+    </div>
+    <div class="nav-section">Reference</div>
+    <div class="nav-item" onclick="showPage('doctors')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+      Doctors
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">Dr</div>
+      <div>
+        <div class="user-name">Dr. Rahman</div>
+        <div class="user-role">Lab Director</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Dashboard</div>
+    <div class="search-box" style="width:300px">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Search patients, PID, phone, test... (Ctrl+K)" id="global-search" oninput="handleSearch(this.value)" onkeydown="handleSearchKey(event)">
+      <span id="search-clear" style="cursor:pointer;color:var(--text3);font-size:16px;display:none" onclick="clearGlobalSearch()">×</span>
+    </div>
+    <button class="topbar-btn" id="topbar-action" onclick="handleTopbarAction()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span id="topbar-action-text">New Patient</span>
+    </button>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+
+<!-- Modal: New Patient -->
+<div class="modal-overlay" id="modal-patient">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New Patient Registration</div>
+      <button class="modal-close" onclick="closeModal('modal-patient')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Full Name *</label><input id="p-name" placeholder="Patient full name"></div>
+        <div class="form-group"><label>Age</label><input id="p-age" type="number" placeholder="Age"></div>
+        <div class="form-group"><label>Gender</label>
+          <select id="p-gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select>
+        </div>
+        <div class="form-group"><label>Phone</label><input id="p-phone" placeholder="01XXXXXXXXX"></div>
+        <div class="form-group full"><label>Address</label><input id="p-address" placeholder="Address"></div>
+        <div class="form-group"><label>Referred By</label>
+          <select id="p-doctor"><option value="">Select Doctor</option></select>
+        </div>
+        <div class="form-group"><label>Tests Required</label>
+          <select id="p-tests" multiple style="height:80px">
+            <option value="CBC|300">CBC (Complete Blood Count) — ৳300</option>
+            <option value="LFT|500">LFT (Liver Function Test) — ৳500</option>
+            <option value="RFT|400">RFT (Renal Function Test) — ৳400</option>
+            <option value="Lipid|600">Lipid Profile — ৳600</option>
+            <option value="Thyroid|800">Thyroid Profile — ৳800</option>
+            <option value="HbA1c|350">HbA1c — ৳350</option>
+            <option value="Urine R/E|150">Urine R/E — ৳150</option>
+            <option value="X-Ray|500">X-Ray — ৳500</option>
+            <option value="ECG|400">ECG — ৳400</option>
+            <option value="Blood Sugar|200">Blood Sugar (F&PP) — ৳200</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea id="p-notes" placeholder="Clinical notes..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="topbar-btn" onclick="closeModal('modal-patient')">Cancel</button>
+      <button class="topbar-btn primary" onclick="savePatient()">Register Patient</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Report -->
+<div class="modal-overlay" id="modal-report">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="report-modal-title">Test Report</div>
+      <button class="modal-close" onclick="closeModal('modal-report')">×</button>
+    </div>
+    <div class="modal-body" id="report-modal-body"></div>
+    <div class="modal-footer">
+      <button class="topbar-btn" onclick="closeModal('modal-report')">Close</button>
+      <button class="topbar-btn primary" onclick="printReport()">🖨 Print Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Doctor -->
+<div class="modal-overlay" id="modal-doctor">
+  <div class="modal" style="width:460px">
+    <div class="modal-header">
+      <div class="modal-title">Add Doctor / Referral</div>
+      <button class="modal-close" onclick="closeModal('modal-doctor')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Doctor Name *</label><input id="d-name" placeholder="Dr. Full Name"></div>
+        <div class="form-group"><label>Specialty</label><input id="d-spec" placeholder="e.g. Cardiology"></div>
+        <div class="form-group"><label>Phone</label><input id="d-phone" placeholder="01XXXXXXXXX"></div>
+        <div class="form-group"><label>Hospital / Chamber</label><input id="d-hospital" placeholder="Hospital name"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="topbar-btn" onclick="closeModal('modal-doctor')">Cancel</button>
+      <button class="topbar-btn primary" onclick="saveDoctor()">Add Doctor</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── State ───────────────────────────────────────────────
+let patients = JSON.parse(localStorage.getItem('pc_patients') || '[]');
+let doctors = JSON.parse(localStorage.getItem('pc_doctors') || '[]');
+let samples = JSON.parse(localStorage.getItem('pc_samples') || '[]');
+let currentPage = 'dashboard';
+let pidCounter = parseInt(localStorage.getItem('pc_pid') || '1000');
+
+// Query state per page
+let patientQuery = { text:'', status:'', gender:'', doctor:'', test:'', dateFrom:'', dateTo:'', sortBy:'date', sortDir:-1 };
+let billingQuery = { text:'', paid:'', dateFrom:'', dateTo:'', sortBy:'date', sortDir:-1 };
+let sampleQuery  = { text:'', status:'', dateFrom:'', dateTo:'' };
+let reportQuery  = { text:'', status:'', dateFrom:'', dateTo:'' };
+
+function save() {
+  localStorage.setItem('pc_patients', JSON.stringify(patients));
+  localStorage.setItem('pc_doctors', JSON.stringify(doctors));
+  localStorage.setItem('pc_samples', JSON.stringify(samples));
+  localStorage.setItem('pc_pid', pidCounter);
+  document.getElementById('patient-count').textContent = patients.length;
+}
+
+// ─── Toast ────────────────────────────────────────────────
+function toast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color || 'var(--green)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── Global Search ────────────────────────────────────────
+function handleSearch(val) {
+  const clr = document.getElementById('search-clear');
+  if (clr) clr.style.display = val ? 'block' : 'none';
+  if (!val) return;
+  showGlobalResults(val);
+}
+
+function handleSearchKey(e) {
+  if (e.key === 'Escape') clearGlobalSearch();
+}
+
+function clearGlobalSearch() {
+  const inp = document.getElementById('global-search');
+  if (inp) inp.value = '';
+  const clr = document.getElementById('search-clear');
+  if (clr) clr.style.display = 'none';
+  renderPage(currentPage);
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    const inp = document.getElementById('global-search');
+    if (inp) { inp.focus(); inp.select(); }
+  }
+});
+
+function showGlobalResults(q) {
+  const lq = q.toLowerCase();
+  const hits = patients.filter(p =>
+    p.name.toLowerCase().includes(lq) ||
+    String(p.pid).includes(lq) ||
+    (p.phone||'').includes(lq) ||
+    p.tests.some(t => t.split('|')[0].toLowerCase().includes(lq)) ||
+    (p.doctor||'').toLowerCase().includes(lq) ||
+    (p.address||'').toLowerCase().includes(lq)
+  );
+
+  function hl(str) {
+    if (!str) return '—';
+    const idx = str.toLowerCase().indexOf(lq);
+    if (idx < 0) return str;
+    return str.slice(0,idx) + `<span class="highlight">${str.slice(idx,idx+lq.length)}</span>` + str.slice(idx+lq.length);
+  }
+
+  const items = hits.map(p => `
+    <div class="global-result-item" onclick="viewReport(${p.pid})">
+      <div class="global-result-icon">
+        <svg width="16" height="16" fill="none" stroke="var(--accent)" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </div>
+      <div class="global-result-main">
+        <div class="global-result-name">${hl(p.name)} <span class="pid" style="font-size:11px">#${p.pid}</span></div>
+        <div class="global-result-sub">${hl(p.tests.map(t=>t.split('|')[0]).join(', '))} · ${p.age}y / ${p.gender} · ${hl(p.phone)}</div>
+      </div>
+      <span class="badge ${p.status.toLowerCase()}">${p.status}</span>
+      <span style="font-family:var(--mono);font-size:12px;color:var(--accent);margin-left:8px">৳${p.total}</span>
+    </div>`).join('') || '<div class="empty">No results found for "<b>'+q+'</b>"</div>';
+
+  document.getElementById('content').innerHTML = `
+  <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:13px;color:var(--text2)">Search results for</span>
+    <span style="font-weight:600">"${q}"</span>
+    <span style="font-size:12px;color:var(--text3);font-family:var(--mono)">${hits.length} found</span>
+    <button class="btn-reset" style="margin-left:auto" onclick="clearGlobalSearch()">✕ Clear</button>
+  </div>
+  <div class="section"><div class="global-results">${items}</div></div>`;
+  document.getElementById('page-title').textContent = 'Search Results';
+}
+
+// ─── Apply filters to patient list ───────────────────────
+function applyPatientQuery(list, q) {
+  let r = [...list];
+  if (q.text) {
+    const lq = q.text.toLowerCase();
+    r = r.filter(p => p.name.toLowerCase().includes(lq) || String(p.pid).includes(lq) || (p.phone||'').includes(lq) || p.tests.some(t=>t.split('|')[0].toLowerCase().includes(lq)) || (p.doctor||'').toLowerCase().includes(lq));
+  }
+  if (q.status) r = r.filter(p => p.status === q.status);
+  if (q.gender) r = r.filter(p => p.gender === q.gender);
+  if (q.doctor) r = r.filter(p => (p.doctor||'').toLowerCase().includes(q.doctor.toLowerCase()));
+  if (q.test) r = r.filter(p => p.tests.some(t => t.split('|')[0].toLowerCase().includes(q.test.toLowerCase())));
+  if (q.dateFrom) r = r.filter(p => new Date(p.date) >= new Date(q.dateFrom));
+  if (q.dateTo) r = r.filter(p => new Date(p.date) <= new Date(q.dateTo + 'T23:59:59'));
+  r.sort((a,b) => {
+    let va = q.sortBy === 'date' ? new Date(a.date) : q.sortBy === 'name' ? a.name : q.sortBy === 'total' ? a.total : new Date(a.date);
+    let vb = q.sortBy === 'date' ? new Date(b.date) : q.sortBy === 'name' ? b.name : q.sortBy === 'total' ? b.total : new Date(b.date);
+    return va > vb ? q.sortDir : va < vb ? -q.sortDir : 0;
+  });
+  return r;
+}
+
+function activeFilters(q, exclude=[]) {
+  const labels = { text:'Search', status:'Status', gender:'Gender', doctor:'Doctor', test:'Test', dateFrom:'From', dateTo:'To' };
+  return Object.entries(q).filter(([k,v]) => v && !exclude.includes(k) && labels[k]).map(([k,v]) =>
+    `<span class="filter-chip" onclick="clearFilter('${k}')">${labels[k]}: ${v} <span class="x">×</span></span>`
+  ).join('');
+}
+
+// ─── Navigation ───────────────────────────────────────────
+function showPage(page) {
+  currentPage = page;
+  clearGlobalSearch();
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+  else {
+    const map = {dashboard:0,patients:1,samples:2,reports:3,billing:4,doctors:5};
+    document.querySelectorAll('.nav-item')[map[page]]?.classList.add('active');
+  }
+  const pages = { dashboard:'Dashboard', patients:'Patients', samples:'Samples', reports:'Reports', billing:'Billing', doctors:'Doctors' };
+  document.getElementById('page-title').textContent = pages[page];
+  const actions = { dashboard:'Quick Register', patients:'New Patient', samples:'New Entry', reports:'View All', billing:'New Invoice', doctors:'Add Doctor' };
+  document.getElementById('topbar-action-text').textContent = actions[page];
+  renderPage(page);
+}
+
+function handleTopbarAction() {
+  const actions = { dashboard:()=>openModal('modal-patient'), patients:()=>openModal('modal-patient'), doctors:()=>openModal('modal-doctor'), samples:()=>openModal('modal-patient'), reports:()=>renderPage('reports'), billing:()=>renderPage('billing') };
+  (actions[currentPage]||(() => {}))();
+}
+
+// ─── Pages ────────────────────────────────────────────────
+function renderPage(page) {
+  const c = document.getElementById('content');
+  if (page === 'dashboard') c.innerHTML = renderDashboard();
+  else if (page === 'patients') c.innerHTML = renderPatientsHTML();
+  else if (page === 'samples') c.innerHTML = renderSamplesHTML();
+  else if (page === 'reports') c.innerHTML = renderReportsHTML();
+  else if (page === 'billing') c.innerHTML = renderBillingHTML();
+  else if (page === 'doctors') c.innerHTML = renderDoctorsHTML();
+}
+
+function renderDashboard() {
+  const today = new Date().toDateString();
+  const todayP = patients.filter(p => new Date(p.date).toDateString() === today).length;
+  const pending = patients.filter(s => s.status === 'Pending').length;
+  const processing = patients.filter(s => s.status === 'Processing').length;
+  const ready = patients.filter(s => s.status === 'Ready').length;
+  const revenue = patients.reduce((a,p) => a+(p.total||0), 0);
+
+  const recentPatients = [...patients].reverse().slice(0,5);
+  const recentRows = recentPatients.map(p=>`
+    <tr>
+      <td><span class="pid">#${p.pid}</span></td>
+      <td>${p.name}</td>
+      <td>${p.tests.map(t=>t.split('|')[0]).join(', ')}</td>
+      <td><span class="badge ${p.status.toLowerCase()}">${p.status}</span></td>
+      <td style="color:var(--accent);font-family:var(--mono)">৳${p.total}</td>
+    </tr>`).join('') || '<tr><td colspan="5"><div class="empty">No patients yet. Register your first patient!</div></td></tr>';
+
+  const activities = [...patients].reverse().slice(0,6).map(p=>`
+    <div class="activity-item">
+      <div class="activity-dot" style="background:var(--accent)"></div>
+      <div>
+        <div class="activity-text"><b>${p.name}</b> registered — ${p.tests.map(t=>t.split('|')[0]).join(', ')}</div>
+        <div class="activity-time">${new Date(p.date).toLocaleString('en-BD')}</div>
+      </div>
+    </div>`).join('') || '<div class="empty">No recent activity</div>';
+
+  return `
+  <div class="stats-grid">
+    <div class="stat-card blue"><div class="stat-label">Total Patients</div><div class="stat-value">${patients.length}</div><div class="stat-sub">Today: <span>${todayP}</span></div></div>
+    <div class="stat-card amber"><div class="stat-label">Pending</div><div class="stat-value">${pending}</div><div class="stat-sub">Awaiting processing</div></div>
+    <div class="stat-card purple"><div class="stat-label">Processing</div><div class="stat-value">${processing}</div><div class="stat-sub">In lab</div></div>
+    <div class="stat-card green"><div class="stat-label">Ready</div><div class="stat-value">${ready}</div><div class="stat-sub">Awaiting delivery</div></div>
+    <div class="stat-card cyan"><div class="stat-label">Revenue</div><div class="stat-value" style="font-size:20px">৳${revenue.toLocaleString()}</div><div class="stat-sub">Total collected</div></div>
+  </div>
+  <div class="two-col">
+    <div class="section">
+      <div class="section-header"><div class="section-title">Recent Patients</div><button class="action-btn" onclick="showPage('patients')">View All</button></div>
+      <table><thead><tr><th>PID</th><th>Name</th><th>Tests</th><th>Status</th><th>Amount</th></tr></thead><tbody>${recentRows}</tbody></table>
+    </div>
+    <div class="section">
+      <div class="section-header"><div class="section-title">Recent Activity</div></div>
+      <div style="padding:8px 18px">${activities}</div>
+    </div>
+  </div>`;
+}
+
+function renderPatientsHTML() {
+  const q = patientQuery;
+  const list = applyPatientQuery([...patients].reverse(), q);
+  const chips = activeFilters(q, ['sortBy','sortDir']);
+
+  const rows = list.map(p => `
+    <tr>
+      <td><span class="pid">#${p.pid}</span></td>
+      <td><b>${p.name}</b><br><span style="color:var(--text3);font-size:11px">${p.phone}</span></td>
+      <td>${p.age}y / ${p.gender}</td>
+      <td style="font-size:12px">${p.tests.map(t=>t.split('|')[0]).join(', ')}</td>
+      <td>${p.doctor||'—'}</td>
+      <td><span class="badge ${p.status.toLowerCase()}">${p.status}</span></td>
+      <td style="color:var(--accent);font-family:var(--mono)">৳${p.total}</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="action-btn" onclick="viewReport(${p.pid})">Report</button>
+          <button class="action-btn" onclick="cycleStatus(${p.pid})">→ Next</button>
+          <button class="action-btn" style="color:var(--red)" onclick="deletePatient(${p.pid})">Del</button>
+        </div>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8"><div class="empty">No patients match your filters.</div></td></tr>';
+
+  const testOpts = ['CBC','LFT','RFT','Lipid','Thyroid','HbA1c','Urine R/E','X-Ray','ECG','Blood Sugar'].map(t=>`<option value="${t}"${q.test===t?' selected':''}>${t}</option>`).join('');
+  const docOpts = doctors.map(d=>`<option value="${d.name}"${q.doctor===d.name?' selected':''}>${d.name}</option>`).join('');
+
+  function sortBtn(field, label) {
+    const active = q.sortBy === field;
+    const arrow = active ? (q.sortDir === -1 ? ' ↓' : ' ↑') : '';
+    return `<button class="sort-btn ${active?'active':''}" onclick="setPatientSort('${field}')">${label}${arrow}</button>`;
+  }
+
+  return `
+  <div class="advanced-query">
+    <div class="query-title">🔍 Advanced Query</div>
+    <div class="query-grid">
+      <div><label class="filter-label">Search (name / PID / phone)</label>
+        <input type="text" placeholder="Type to search..." value="${q.text}" oninput="patientQuery.text=this.value;renderPage('patients')" style="width:100%;margin-top:5px"></div>
+      <div><label class="filter-label">Test Type</label>
+        <select onchange="patientQuery.test=this.value;renderPage('patients')" style="width:100%;margin-top:5px"><option value="">All Tests</option>${testOpts}</select></div>
+      <div><label class="filter-label">Status</label>
+        <select onchange="patientQuery.status=this.value;renderPage('patients')" style="width:100%;margin-top:5px">
+          <option value="">All Status</option>
+          ${['Pending','Processing','Ready','Delivered'].map(s=>`<option value="${s}"${q.status===s?' selected':''}>${s}</option>`).join('')}
+        </select></div>
+      <div><label class="filter-label">Gender</label>
+        <select onchange="patientQuery.gender=this.value;renderPage('patients')" style="width:100%;margin-top:5px">
+          <option value="">All</option>${['Male','Female','Other'].map(g=>`<option${q.gender===g?' selected':''}>${g}</option>`).join('')}
+        </select></div>
+      <div><label class="filter-label">Referred By</label>
+        <select onchange="patientQuery.doctor=this.value;renderPage('patients')" style="width:100%;margin-top:5px"><option value="">All Doctors</option>${docOpts}</select></div>
+      <div><label class="filter-label">Date From</label>
+        <input type="date" value="${q.dateFrom}" onchange="patientQuery.dateFrom=this.value;renderPage('patients')" style="width:100%;margin-top:5px"></div>
+      <div><label class="filter-label">Date To</label>
+        <input type="date" value="${q.dateTo}" onchange="patientQuery.dateTo=this.value;renderPage('patients')" style="width:100%;margin-top:5px"></div>
+      <div style="display:flex;align-items:flex-end"><button class="btn-reset" onclick="resetQuery('patient')" style="width:100%;height:34px;margin-top:5px">Reset All</button></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Patient Registry</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;color:var(--text3);font-family:var(--mono)">${list.length} result${list.length!==1?'s':''}</span>
+        <div style="display:flex;gap:6px">${sortBtn('date','Date')}${sortBtn('name','Name')}${sortBtn('total','Amount')}</div>
+        <button class="topbar-btn primary" onclick="openModal('modal-patient')">+ New Patient</button>
+      </div>
+    </div>
+    ${chips ? `<div class="chips-row">${chips}</div>` : ''}
+    <table><thead><tr><th>PID</th><th>Patient</th><th>Age/Sex</th><th>Tests</th><th>Referred By</th><th>Status</th><th>Amount</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+}
+
+function setPatientSort(field) {
+  if (patientQuery.sortBy === field) patientQuery.sortDir *= -1;
+  else { patientQuery.sortBy = field; patientQuery.sortDir = -1; }
+  renderPage('patients');
+}
+
+function clearFilter(key) {
+  patientQuery[key] = '';
+  renderPage('patients');
+}
+
+function resetQuery(page) {
+  if (page === 'patient') { patientQuery = { text:'', status:'', gender:'', doctor:'', test:'', dateFrom:'', dateTo:'', sortBy:'date', sortDir:-1 }; renderPage('patients'); }
+  if (page === 'billing') { billingQuery = { text:'', paid:'', dateFrom:'', dateTo:'', sortBy:'date', sortDir:-1 }; renderPage('billing'); }
+  if (page === 'sample') { sampleQuery = { text:'', status:'', dateFrom:'', dateTo:'' }; renderPage('samples'); }
+  if (page === 'report') { reportQuery = { text:'', status:'', dateFrom:'', dateTo:'' }; renderPage('reports'); }
+}
+
+function renderSamplesHTML() {
+  const q = sampleQuery;
+  let list = [...patients].reverse();
+  if (q.text) { const lq=q.text.toLowerCase(); list=list.filter(p=>p.name.toLowerCase().includes(lq)||String(p.pid).includes(lq)); }
+  if (q.status) list = list.filter(p => p.status === q.status);
+  if (q.dateFrom) list = list.filter(p => new Date(p.date) >= new Date(q.dateFrom));
+  if (q.dateTo) list = list.filter(p => new Date(p.date) <= new Date(q.dateTo+'T23:59:59'));
+
+  const rows = list.map(p => `
+    <tr>
+      <td><span class="pid">#${p.pid}</span></td>
+      <td>${p.name}</td>
+      <td style="font-size:12px">${p.tests.map(t=>t.split('|')[0]).join(', ')}</td>
+      <td>${new Date(p.date).toLocaleDateString('en-BD')}</td>
+      <td><span class="badge ${p.status.toLowerCase()}">${p.status}</span></td>
+      <td><button class="action-btn" onclick="cycleStatus(${p.pid})">Update →</button></td>
+    </tr>`).join('') || '<tr><td colspan="6"><div class="empty">No samples match filters.</div></td></tr>';
+
+  return `
+  <div class="filter-bar">
+    <span class="filter-label">Search:</span>
+    <input type="text" placeholder="Name or PID..." value="${q.text}" oninput="sampleQuery.text=this.value;renderPage('samples')">
+    <span class="filter-label">Status:</span>
+    <select onchange="sampleQuery.status=this.value;renderPage('samples')">
+      <option value="">All</option>
+      ${['Pending','Processing','Ready','Delivered'].map(s=>`<option value="${s}"${q.status===s?' selected':''}>${s}</option>`).join('')}
+    </select>
+    <span class="filter-label">From:</span><input type="date" value="${q.dateFrom}" onchange="sampleQuery.dateFrom=this.value;renderPage('samples')">
+    <span class="filter-label">To:</span><input type="date" value="${q.dateTo}" onchange="sampleQuery.dateTo=this.value;renderPage('samples')">
+    <button class="btn-reset" onclick="resetQuery('sample')">Reset</button>
+    <span class="result-count">${list.length} records</span>
+  </div>
+  <div class="section">
+    <div class="section-header"><div class="section-title">Sample Tracking</div></div>
+    <div style="padding:12px 18px;display:flex;gap:12px;border-bottom:1px solid var(--border)">
+      ${['Pending','Processing','Ready','Delivered'].map(s => {
+        const n = patients.filter(p=>p.status===s).length;
+        const col = {Pending:'amber',Processing:'blue',Ready:'green',Delivered:'text3'}[s];
+        const active = q.status===s;
+        return `<div style="background:var(--surface2);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;border:1px solid ${active?'var(--accent)':'transparent'}" onclick="sampleQuery.status=sampleQuery.status==='${s}'?'':'${s}';renderPage('samples')"><span style="color:var(--${col})">${s}</span><span style="margin-left:8px;font-weight:600;font-family:var(--mono)">${n}</span></div>`;
+      }).join('')}
+    </div>
+    <table><thead><tr><th>PID</th><th>Patient</th><th>Tests</th><th>Date</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+}
+
+function renderReportsHTML() {
+  const q = reportQuery;
+  let list = patients.filter(p => p.status === 'Ready' || p.status === 'Delivered');
+  if (q.text) { const lq=q.text.toLowerCase(); list=list.filter(p=>p.name.toLowerCase().includes(lq)||String(p.pid).includes(lq)||p.tests.some(t=>t.split('|')[0].toLowerCase().includes(lq))); }
+  if (q.status) list = list.filter(p => p.status === q.status);
+  if (q.dateFrom) list = list.filter(p => new Date(p.date) >= new Date(q.dateFrom));
+  if (q.dateTo) list = list.filter(p => new Date(p.date) <= new Date(q.dateTo+'T23:59:59'));
+  list = [...list].reverse();
+
+  const testOpts = ['CBC','LFT','RFT','Lipid','Thyroid','HbA1c','Urine R/E','X-Ray','ECG','Blood Sugar'].map(t=>`<option value="${t}">${t}</option>`).join('');
+
+  const rows = list.map(p => `
+    <tr>
+      <td><span class="pid">#${p.pid}</span></td>
+      <td>${p.name}</td>
+      <td style="font-size:12px">${p.tests.map(t=>t.split('|')[0]).join(', ')}</td>
+      <td>${new Date(p.date).toLocaleDateString('en-BD')}</td>
+      <td><span class="badge ${p.status.toLowerCase()}">${p.status}</span></td>
+      <td><button class="action-btn" onclick="viewReport(${p.pid})">View Report</button></td>
+    </tr>`).join('') || '<tr><td colspan="6"><div class="empty">No completed reports match your search.</div></td></tr>';
+
+  return `
+  <div class="filter-bar">
+    <span class="filter-label">Search:</span>
+    <input type="text" placeholder="Name, PID, or test..." value="${q.text}" oninput="reportQuery.text=this.value;renderPage('reports')">
+    <span class="filter-label">Status:</span>
+    <select onchange="reportQuery.status=this.value;renderPage('reports')">
+      <option value="">Ready + Delivered</option>
+      <option value="Ready"${q.status==='Ready'?' selected':''}>Ready</option>
+      <option value="Delivered"${q.status==='Delivered'?' selected':''}>Delivered</option>
+    </select>
+    <span class="filter-label">From:</span><input type="date" value="${q.dateFrom}" onchange="reportQuery.dateFrom=this.value;renderPage('reports')">
+    <span class="filter-label">To:</span><input type="date" value="${q.dateTo}" onchange="reportQuery.dateTo=this.value;renderPage('reports')">
+    <button class="btn-reset" onclick="resetQuery('report')">Reset</button>
+    <span class="result-count">${list.length} reports</span>
+  </div>
+  <div class="section">
+    <div class="section-header"><div class="section-title">Test Reports</div></div>
+    <table><thead><tr><th>PID</th><th>Patient</th><th>Tests</th><th>Date</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+}
+
+function renderBillingHTML() {
+  const q = billingQuery;
+  let list = [...patients].reverse();
+  if (q.text) { const lq=q.text.toLowerCase(); list=list.filter(p=>p.name.toLowerCase().includes(lq)||String(p.pid).includes(lq)); }
+  if (q.paid === 'paid') list = list.filter(p => p.paid);
+  if (q.paid === 'due') list = list.filter(p => !p.paid);
+  if (q.dateFrom) list = list.filter(p => new Date(p.date) >= new Date(q.dateFrom));
+  if (q.dateTo) list = list.filter(p => new Date(p.date) <= new Date(q.dateTo+'T23:59:59'));
+  list.sort((a,b) => {
+    const va = q.sortBy==='total' ? a.total : new Date(a.date);
+    const vb = q.sortBy==='total' ? b.total : new Date(b.date);
+    return va>vb ? q.sortDir : va<vb ? -q.sortDir : 0;
+  });
+
+  const filteredTotal = list.reduce((a,p)=>a+(p.total||0),0);
+  const filteredPaid  = list.filter(p=>p.paid).reduce((a,p)=>a+(p.total||0),0);
+  const total = patients.reduce((a,p)=>a+(p.total||0),0);
+  const paid  = patients.filter(p=>p.paid).reduce((a,p)=>a+(p.total||0),0);
+  const due   = total - paid;
+
+  function sortBtn(field, label) {
+    const active = q.sortBy === field;
+    const arrow = active ? (q.sortDir===-1?' ↓':' ↑') : '';
+    return `<button class="sort-btn ${active?'active':''}" onclick="setBillingSort('${field}')">${label}${arrow}</button>`;
+  }
+
+  const rows = list.map(p => `
+    <tr>
+      <td><span class="pid">#${p.pid}</span></td>
+      <td>${p.name}</td>
+      <td style="font-size:12px">${p.tests.map(t=>t.split('|')[0]).join(', ')}</td>
+      <td style="font-family:var(--mono);color:var(--accent)">৳${p.total}</td>
+      <td><span class="badge ${p.paid?'ready':'pending'}">${p.paid?'Paid':'Due'}</span></td>
+      <td><button class="action-btn" onclick="togglePaid(${p.pid})">${p.paid?'Mark Due':'Mark Paid'}</button>
+          <button class="action-btn" onclick="viewInvoice(${p.pid})">Invoice</button></td>
+    </tr>`).join('') || '<tr><td colspan="6"><div class="empty">No billing records match.</div></td></tr>';
+
+  return `
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+    <div class="stat-card cyan"><div class="stat-label">Total Revenue</div><div class="stat-value" style="font-size:20px">৳${total.toLocaleString()}</div></div>
+    <div class="stat-card green"><div class="stat-label">Collected</div><div class="stat-value" style="font-size:20px">৳${paid.toLocaleString()}</div></div>
+    <div class="stat-card amber"><div class="stat-label">Due</div><div class="stat-value" style="font-size:20px">৳${due.toLocaleString()}</div></div>
+  </div>
+  <div class="filter-bar">
+    <span class="filter-label">Search:</span>
+    <input type="text" placeholder="Name or PID..." value="${q.text}" oninput="billingQuery.text=this.value;renderPage('billing')">
+    <span class="filter-label">Payment:</span>
+    <select onchange="billingQuery.paid=this.value;renderPage('billing')">
+      <option value="">All</option>
+      <option value="paid"${q.paid==='paid'?' selected':''}>Paid</option>
+      <option value="due"${q.paid==='due'?' selected':''}>Due</option>
+    </select>
+    <span class="filter-label">From:</span><input type="date" value="${q.dateFrom}" onchange="billingQuery.dateFrom=this.value;renderPage('billing')">
+    <span class="filter-label">To:</span><input type="date" value="${q.dateTo}" onchange="billingQuery.dateTo=this.value;renderPage('billing')">
+    ${sortBtn('date','Sort: Date')} ${sortBtn('total','Sort: Amount')}
+    <button class="btn-reset" onclick="resetQuery('billing')">Reset</button>
+    <span class="result-count">${list.length} · ৳${filteredTotal.toLocaleString()} (৳${filteredPaid.toLocaleString()} paid)</span>
+  </div>
+  <div class="section">
+    <div class="section-header"><div class="section-title">Billing Records</div></div>
+    <table><thead><tr><th>PID</th><th>Patient</th><th>Tests</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+}
+
+function setBillingSort(field) {
+  if (billingQuery.sortBy === field) billingQuery.sortDir *= -1;
+  else { billingQuery.sortBy = field; billingQuery.sortDir = -1; }
+  renderPage('billing');
+}
+
+function renderDoctorsHTML() {
+  const rows = doctors.map(d => {
+    const refs = patients.filter(p => p.doctor === d.name).length;
+    return `
+    <tr>
+      <td><b>${d.name}</b></td>
+      <td>${d.spec||'—'}</td>
+      <td>${d.hospital||'—'}</td>
+      <td>${d.phone||'—'}</td>
+      <td style="font-family:var(--mono);color:var(--accent)">${refs}</td>
+      <td><button class="action-btn" onclick="showPage('patients');patientQuery.doctor='${d.name}';renderPage('patients')">View Patients</button>
+          <button class="action-btn" style="color:var(--red)" onclick="deleteDoctor('${d.name}')">Remove</button></td>
+    </tr>`;}).join('') || '<tr><td colspan="6"><div class="empty">No doctors added yet.</div></td></tr>';
+  return `
+  <div class="section">
+    <div class="section-header"><div class="section-title">Doctor / Referral Registry</div>
+      <button class="topbar-btn primary" onclick="openModal('modal-doctor')">+ Add Doctor</button>
+    </div>
+    <table><thead><tr><th>Name</th><th>Specialty</th><th>Hospital</th><th>Phone</th><th>Referrals</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+}
+
+// ─── Actions ──────────────────────────────────────────────
+function savePatient() {
+  const name = document.getElementById('p-name').value.trim();
+  if (!name) { toast('Please enter patient name','var(--red)'); return; }
+  const sel = document.getElementById('p-tests');
+  const tests = Array.from(sel.selectedOptions).map(o => o.value);
+  if (!tests.length) { toast('Please select at least one test','var(--red)'); return; }
+  const total = tests.reduce((a,t) => a+parseInt(t.split('|')[1]||0), 0);
+  pidCounter++;
+  const p = {
+    pid: pidCounter, name,
+    age: document.getElementById('p-age').value || 'N/A',
+    gender: document.getElementById('p-gender').value || 'N/A',
+    phone: document.getElementById('p-phone').value || '',
+    address: document.getElementById('p-address').value || '',
+    doctor: document.getElementById('p-doctor').value,
+    tests, total,
+    notes: document.getElementById('p-notes').value || '',
+    status: 'Pending', paid: false,
+    date: new Date().toISOString()
+  };
+  patients.push(p); save();
+  closeModal('modal-patient');
+  toast(`✓ Patient #${pidCounter} registered — ৳${total}`);
+  renderPage(currentPage);
+  ['p-name','p-age','p-phone','p-address','p-notes'].forEach(id => document.getElementById(id).value = '');
+}
+
+function saveDoctor() {
+  const name = document.getElementById('d-name').value.trim();
+  if (!name) { toast('Please enter doctor name','var(--red)'); return; }
+  if (doctors.find(d => d.name === name)) { toast('Doctor already exists','var(--amber)'); return; }
+  doctors.push({ name, spec: document.getElementById('d-spec').value, phone: document.getElementById('d-phone').value, hospital: document.getElementById('d-hospital').value });
+  save(); closeModal('modal-doctor');
+  toast(`✓ Dr. ${name} added`);
+  updateDoctorSelect();
+  renderPage(currentPage);
+}
+
+function deletePatient(pid) {
+  if (!confirm('Delete this patient record?')) return;
+  patients = patients.filter(p => p.pid !== pid); save();
+  toast('Patient deleted'); renderPage(currentPage);
+}
+
+function deleteDoctor(name) {
+  doctors = doctors.filter(d => d.name !== name); save();
+  toast('Doctor removed'); renderPage('doctors');
+}
+
+function cycleStatus(pid) {
+  const cycle = ['Pending','Processing','Ready','Delivered'];
+  const p = patients.find(x => x.pid === pid);
+  if (!p) return;
+  const i = cycle.indexOf(p.status);
+  p.status = cycle[(i+1) % cycle.length];
+  save(); toast(`Status → ${p.status}`); renderPage(currentPage);
+}
+
+function togglePaid(pid) {
+  const p = patients.find(x => x.pid === pid);
+  if (!p) return;
+  p.paid = !p.paid; save(); renderPage('billing');
+}
+
+function updateDoctorSelect() {
+  const sel = document.getElementById('p-doctor');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select Doctor</option>' + doctors.map(d=>`<option>${d.name}</option>`).join('');
+}
+
+// ─── Report Viewer ────────────────────────────────────────
+const TEST_DATA = {
+  'CBC':[['Hemoglobin','13.5','g/dL','12-17','normal'],['WBC','7200','/μL','4000-11000','normal'],['Platelets','185000','/μL','150000-400000','normal'],['RBC','4.8','M/μL','4.5-5.5','normal'],['Hematocrit','41','%','37-52','normal']],
+  'LFT':[['SGPT (ALT)','42','U/L','7-56','normal'],['SGOT (AST)','38','U/L','10-40','high'],['Bilirubin Total','0.9','mg/dL','0.2-1.2','normal'],['Alkaline Phosphatase','88','U/L','44-147','normal']],
+  'RFT':[['Creatinine','1.1','mg/dL','0.7-1.3','normal'],['Urea','28','mg/dL','10-50','normal'],['Uric Acid','5.2','mg/dL','3.5-7.2','normal'],['eGFR','85','mL/min','≥60','normal']],
+  'Lipid':[['Total Cholesterol','195','mg/dL','<200','normal'],['LDL','128','mg/dL','<130','normal'],['HDL','45','mg/dL','>40','normal'],['Triglycerides','165','mg/dL','<150','high']],
+  'Thyroid':[['TSH','2.4','mIU/L','0.4-4.0','normal'],['T3','1.2','ng/mL','0.8-2.0','normal'],['T4','8.5','μg/dL','5.1-14.1','normal']],
+  'HbA1c':[['HbA1c','6.1','%','<5.7 Normal / 5.7-6.4 Pre-DM / >6.4 DM','normal']],
+  'Blood Sugar':[['Fasting Blood Sugar','92','mg/dL','70-100','normal'],['Post-Prandial','128','mg/dL','<140','normal']],
+  'Urine R/E':[['Protein','Nil','','Nil','normal'],['Sugar','Nil','','Nil','normal'],['RBC','0-1','/HPF','0-2','normal'],['Pus Cells','2-3','/HPF','0-5','normal'],['pH','6.5','','5.0-8.0','normal']],
+};
+
+function viewReport(pid) {
+  const p = patients.find(x => x.pid === pid);
+  if (!p) return;
+  document.getElementById('report-modal-title').textContent = `Report — ${p.name} (#${p.pid})`;
+  let html = `<div style="margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:8px;font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div><span style="color:var(--text3)">Patient:</span> <b>${p.name}</b></div>
+    <div><span style="color:var(--text3)">PID:</span> <span class="pid">#${p.pid}</span></div>
+    <div><span style="color:var(--text3)">Age/Sex:</span> ${p.age}y / ${p.gender}</div>
+    <div><span style="color:var(--text3)">Date:</span> ${new Date(p.date).toLocaleDateString('en-BD')}</div>
+    <div><span style="color:var(--text3)">Referred By:</span> ${p.doctor||'—'}</div>
+    <div><span style="color:var(--text3)">Status:</span> <span class="badge ${p.status.toLowerCase()}">${p.status}</span></div>
+  </div>`;
+  p.tests.forEach(t => {
+    const tname = t.split('|')[0];
+    const data = TEST_DATA[tname];
+    html += `<div style="margin-bottom:14px"><div style="font-weight:600;font-size:13px;margin-bottom:8px;color:var(--accent2)">${tname}</div><div class="report-box">`;
+    if (data) {
+      data.forEach(([test,val,unit,range,flag]) => {
+        html += `<div class="report-row"><span class="report-test">${test}</span><div style="text-align:right"><span class="report-result ${flag}">${val} ${unit}</span><br><span class="report-range">Ref: ${range}</span></div></div>`;
+      });
+    } else {
+      html += `<div style="color:var(--text3);font-size:12px">Result pending...</div>`;
+    }
+    html += '</div></div>';
+  });
+  if (p.notes) html += `<div style="margin-top:8px;padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--text2)"><b>Notes:</b> ${p.notes}</div>`;
+  document.getElementById('report-modal-body').innerHTML = html;
+  openModal('modal-report');
+}
+
+function viewInvoice(pid) {
+  const p = patients.find(x => x.pid === pid);
+  if (!p) return;
+  document.getElementById('report-modal-title').textContent = `Invoice #INV-${p.pid}`;
+  const lines = p.tests.map(t => {
+    const [name,price] = t.split('|');
+    return `<div class="invoice-line"><span>${name}</span><span style="font-family:var(--mono)">৳${price}</span></div>`;
+  }).join('');
+  document.getElementById('report-modal-body').innerHTML = `
+    <div style="margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:8px;font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <div><span style="color:var(--text3)">Patient:</span> <b>${p.name}</b></div>
+      <div><span style="color:var(--text3)">PID:</span> <span class="pid">#${p.pid}</span></div>
+      <div><span style="color:var(--text3)">Date:</span> ${new Date(p.date).toLocaleDateString('en-BD')}</div>
+      <div><span style="color:var(--text3)">Status:</span> <span class="badge ${p.paid?'ready':'pending'}">${p.paid?'Paid':'Due'}</span></div>
+    </div>
+    <div style="border:1px solid var(--border);border-radius:10px;padding:14px">
+      ${lines}
+      <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px" class="invoice-total"><span>Total Amount</span><span>৳${p.total}</span></div>
+    </div>`;
+  openModal('modal-report');
+}
+
+function printReport() { window.print(); }
+
+// ─── Modal ────────────────────────────────────────────────
+function openModal(id) {
+  if (id === 'modal-patient') updateDoctorSelect();
+  document.getElementById(id).classList.add('show');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
+});
+
+// ─── Init ─────────────────────────────────────────────────
+document.getElementById('patient-count').textContent = patients.length;
+renderPage('dashboard');
+</script>
+
+</body>
+</html>
